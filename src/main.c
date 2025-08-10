@@ -9,8 +9,20 @@
 
 int main(int argc, char **argv) {
     unsigned interval_ms = 2000; // 2 sec
+
+    // If a user wants to specify a different interval, they can do so
     if (argc == 2) {
-        interval_ms = (unsigned)atoi(argv[1]);
+        char *endptr;
+        long val = strtol(argv[1], &endptr, 10);
+        // Check for conversion errors and non-numeric input
+        if (endptr == argv[1] || *endptr != '\0' || val <= 0) {
+            fprintf(stderr, "Usage: %s [interval_ms]\n", argv[0]);
+            return 1;
+        }
+        interval_ms = (unsigned)val;
+    } else if (argc > 2) {
+        fprintf(stderr, "Usage: %s [interval_ms]\n", argv[0]);
+        return 1;
     }
 
     CpuTimes prev_cpu_times = {0}, now_cpu_times = {0};
