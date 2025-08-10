@@ -93,7 +93,7 @@ int read_meminfo(MemInfo *mem_info) {
  * @return 0 on success, -1 on failure.
  */
 int read_loadavg(LoadAvg *load_avg) {
-    FILE *f = fopen("/proc/loadavg", "re");
+    FILE *f = fopen("/proc/loadavg", "r");
     if (!f) {
         return -1;
     }
@@ -115,7 +115,7 @@ int read_loadavg(LoadAvg *load_avg) {
  * @return 0 on success, -1 on failure.
  */
 int read_uptime(double *uptime_sec) {
-    FILE *f = fopen("/proc/uptime", "re");
+    FILE *f = fopen("/proc/uptime", "r");
     if (!f) {
         return -1;
     }

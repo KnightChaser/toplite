@@ -19,7 +19,7 @@ bool read_text_file(const char *path, // [in]
                     char **out,       // [out]
                     size_t *len       // [out]
 ) {
-    FILE *f = fopen(path, "re");
+    FILE *f = fopen(path, "r");
     if (!f) {
         // Failed to open file
         return false;

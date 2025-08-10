@@ -30,7 +30,7 @@ int scan_task_states(TaskCounts *out) {
 
         char path[256] = {0};
         snprintf(path, sizeof(path), "/proc/%s/stat", e->d_name);
-        FILE *f = fopen(path, "re");
+        FILE *f = fopen(path, "r");
         if (!f) {
             continue;
         }
