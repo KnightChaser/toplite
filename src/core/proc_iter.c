@@ -39,6 +39,9 @@ int scan_task_states(TaskCounts *out) {
         int pid;
         char comm[256] = {0};
         char state = '?';
+        // NOTE: it will fail if a process name (comm) contains a right
+        // parenthesis ). But this is rare in practice, and we can ignore it for
+        // now.
         if (fscanf(f, "%d (%255[^)]) %c", &pid, comm, &state) == 3) {
             out->total++;
             switch (state) {
