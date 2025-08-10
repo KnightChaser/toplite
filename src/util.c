@@ -1,5 +1,6 @@
 // src/util.c
 #include "util.h"
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,20 +85,24 @@ bool read_text_file(const char *path, // [in]
  * @return A pointer to the trimmed string.
  */
 char *trim(char *s) {
-    // Trim leading whitespace characters from a string.
-    while (*s == ' ' || *s == '\t' || *s == '\n') {
+    while (isspace((unsigned char)*s)) {
         s++;
     }
 
-    // Trim trailing whitespace characters from a string.
-    char *e = s + strlen(s);
-    while (e > s && (*e == ' ' || *e == '\t' || *e == '\n')) {
+    // Handle all-whitespace strings and now there's only a null terminator
+    if (*s == '\0') {
+        return s;
+    }
+
+    // Trim trailing whitespaces
+    char *e = s + strlen(s) - 1;
+    while (e > s && isspace((unsigned char)*e)) {
         e--;
     }
 
-    *e = '\0'; // Null-terminate the trimmed string
+    *(e + 1) = '\0'; // Null-terminate the trimmed string
 
-    return s;
+    return s; // Return the trimmed string
 }
 
 /**
