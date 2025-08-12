@@ -9,7 +9,10 @@
  * @param cpu A pointer to a CpuPercentages structure containing CPU usage data.
  */
 static void print_mem(const MemInfo *mem) {
-    // Match top's math:
+    // The "buff/cache" line in 'top' is a sum of Buffers, Cached, and
+    // SReclaimable, which represents memory that can be quickly freed
+    // by the kernel for application use. Shmem is subtracted as it is
+    // not considered easily reclaimable in the same way.
     unsigned long long buffcache =
         mem->buffers + mem->cached + mem->sreclaimable - mem->shmem;
     unsigned long long used = mem->mem_total - mem->mem_free - buffcache;
@@ -35,7 +38,6 @@ static void print_mem(const MemInfo *mem) {
 void render_header_now(const CpuPercentages *cpu, const MemInfo *mem,
                        const LoadAvg *ld, const UptimeFormat *up, int users,
                        const TaskCounts *tc) {
-    // line 1: time, uptime, users, loadavg
     char tbuf[32] = {0};
     time_t t = time(NULL);
     struct tm localtime;
@@ -46,17 +48,14 @@ void render_header_now(const CpuPercentages *cpu, const MemInfo *mem,
            tbuf, up->days, up->hours, up->minutes, users, ld->load1, ld->load5,
            ld->load15);
 
-    // line 2: tasks
     printf(
         "Tasks: %u total,   %u running, %u sleeping, %u stopped, %u zombie\n",
         tc->total, tc->running, tc->sleeping, tc->stopped, tc->zombie);
 
-    // line 3: CPU
     printf("%%Cpu(s): %4.1f us, %4.1f sy, %4.1f ni, %4.1f id, %4.1f wa, %4.1f "
            "hi, %4.1f si, %4.1f st\n",
            cpu->us, cpu->sy, cpu->ni, cpu->id, cpu->wa, cpu->hi, cpu->si,
            cpu->st);
 
-    // lines 4-5: memory
     print_mem(mem);
 }
