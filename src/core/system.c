@@ -1,6 +1,6 @@
 // src/core/system.c
 #include "system.h"
-#include "../util.h"
+#include "../util/util.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

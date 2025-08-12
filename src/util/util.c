@@ -1,6 +1,5 @@
-// src/util.c
+// src/util/util.c
 #include "util.h"
-#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,10 +7,10 @@
 #include <unistd.h>
 
 /**
- * Reads a text file and returns its content.
+ * Reads the entire contents of a text file into a dynamically allocated buffer.
  *
  * @param path The path to the file to read.
- * @param out Pointer to a char pointer where the content will be stored.
+ * @param out Pointer to a char*  where the content will be stored.
  * @param len Pointer to a size_t where the length of the content will be
  * stored.
  * @return true on success, false on failure.
@@ -78,36 +77,9 @@ bool read_text_file(const char *path, // [in]
 }
 
 /**
- * Trim leading and trailing whitespace characters from a string.
- * This function modifies the input string in place.
- *
- * @param s The string to trim.
- * @return A pointer to the trimmed string.
- */
-char *trim(char *s) {
-    while (isspace((unsigned char)*s)) {
-        s++;
-    }
-
-    // Handle all-whitespace strings and now there's only a null terminator
-    if (*s == '\0') {
-        return s;
-    }
-
-    // Trim trailing whitespaces
-    char *e = s + strlen(s) - 1;
-    while (e > s && isspace((unsigned char)*e)) {
-        e--;
-    }
-
-    *(e + 1) = '\0'; // Null-terminate the trimmed string
-
-    return s; // Return the trimmed string
-}
-
-/**
  * Convert a string to an unsigned long long integer safely.
- * This function skips leading whitespace and ignores invalid characters.
+ * Skips leading whitespace. The input pointer 'p' is advanced past
+ * the parsed number. This function does not handle negative numbers.
  *
  * @param p Pointer to the string to convert. The pointer will be updated
  * to point to the first character after the converted number.
@@ -134,7 +106,7 @@ unsigned long long strtoull_safe(const char **p) {
 }
 
 /**
- * Get the system page size.
+ * Get the system's memory page size
  *
  * @return The page size in bytes, or -1 on error.
  */
@@ -148,7 +120,7 @@ long sys_pagesize(void) {
 }
 
 /**
- * Get the system clock ticks per second (Hz).
+ * Get the system's clock ticks per second (USER_HZ)
  *
  * @return The number of clock ticks per second, or -1 on error.
  */
