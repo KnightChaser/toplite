@@ -19,6 +19,11 @@ bool read_text_file(const char *path, // [in]
                     char **out,       // [out]
                     size_t *len       // [out]
 ) {
+    // Required out pointer doesn't exist
+    if (!out) {
+        return false;
+    }
+
     FILE *f = fopen(path, "r");
     if (!f) {
         // Failed to open file
@@ -26,30 +31,32 @@ bool read_text_file(const char *path, // [in]
     }
 
     size_t capacity = 4096, used = 0;
-    char *buf = calloc(capacity + 1, sizeof(char));
+    char *buf = calloc(capacity, sizeof(char));
     if (!buf) {
         fclose(f);
         return false; // Memory allocation failed
     }
 
     while (true) {
-        if (capacity - used == 0) {
+        size_t bytes_to_read = capacity - used;
+        if (bytes_to_read == 0) {
             // Need more space
             capacity *= 2;
-            char *new_buf = realloc(buf, capacity + 1);
+            char *new_buf = realloc(buf, capacity);
             if (!new_buf) {
                 free(buf);
                 fclose(f);
                 return false; // Memory allocation failed
             }
             buf = new_buf;
+            bytes_to_read = capacity - used;
         }
 
         size_t bytes_read = fread(buf + used, 1, capacity - used, f);
         used += bytes_read;
 
-        if (bytes_read == 0) {
-            // End of file (or an error)
+        if (bytes_read < bytes_to_read) {
+            // This indicates either EOF or a read error
             break;
         }
     }
@@ -63,17 +70,23 @@ bool read_text_file(const char *path, // [in]
 
     fclose(f);
 
-    // Null-terminate the string
-    buf[used] = '\0';
-
-    if (out) {
-        *out = buf; // Set the output pointer to the buffer
+    // Shrink to fit and null-terminate
+    char *final_buf = realloc(buf, used + 1);
+    if (!final_buf) {
+        // Even though this final reallocation fails, we still return the
+        // original buffer, even though it's a bit oversized.
+        buf[used] = '\0';
+        *out = buf;
+    } else {
+        final_buf[used] = '\0'; // Null-terminate the string
+        *out = final_buf;       // Set the output pointer to the buffer
     }
+
     if (len) {
-        *len = used; // Set the length of the content
+        *len = used;
     }
 
-    return out != NULL;
+    return true; // Successfully read the file!
 }
 
 /**
