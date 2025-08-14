@@ -70,9 +70,23 @@ void render_process_list(const proc_list_t *list, long hz,
         return;
     }
 
-    printf("\n");
+    // A correct mapping for visual columns to sort type
+    const sort_by_t column_map[] = {
+        SORT_BY_PID,    // Col 0: PID
+        SORT_BY_NONE,   // Col 1: USER
+        SORT_BY_NONE,   // Col 2: PR
+        SORT_BY_NONE,   // Col 3: NI
+        SORT_BY_NONE,   // Col 4: VIRT
+        SORT_BY_NONE,   // Col 5: RES
+        SORT_BY_NONE,   // Col 6: SHR
+        SORT_BY_NONE,   // Col 7: S
+        SORT_BY_CPU,    // Col 8: %CPU
+        SORT_BY_MEM,    // Col 9: %MEM
+        SORT_BY_TIME,   // Col 10: TIME+
+        SORT_BY_COMMAND // Col 11: COMMAND
+    };
 
-    // BUild and print the styled, highlighted header
+    // Build and print the styled, highlighted header
     sort_by_t current_sort = sorting_get_current_column();
     char header_buf[512] = {0};
     int offset = 0;
@@ -84,12 +98,16 @@ void render_process_list(const proc_list_t *list, long hz,
 
     // Print the header with appropriate styles
     for (int i = 0; i < (int)(sizeof(cols) / sizeof(cols[0])); i++) {
-        // If this is the sorted column, wrap it in REVERSE style
-        const char *style = (i == (int)current_sort) ? BOLD REVERSE : BOLD;
+        const char *style = BOLD;
+
+        // Highlight if the column is sortable AND it's the current sort
+        if (column_map[i] != SORT_BY_NONE && column_map[i] == current_sort) {
+            style = BOLD REVERSE;
+        }
+
         offset += snprintf(header_buf + offset, sizeof(header_buf) - offset,
                            "%s%*s" RESET, style, widths[i], cols[i]);
         if (i < 11) {
-            // Add a space after each column except the last
             offset +=
                 snprintf(header_buf + offset, sizeof(header_buf) - offset, " ");
         }

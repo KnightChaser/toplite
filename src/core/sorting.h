@@ -3,6 +3,7 @@
 #include "process.h"
 
 typedef enum {
+    SORT_BY_NONE = 1, // A marker for non-sortable columns
     SORT_BY_PID,
     SORT_BY_CPU,
     SORT_BY_MEM,
