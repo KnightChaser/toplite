@@ -1,5 +1,6 @@
 // src/ui/render.c
 #include "render.h"
+#include "../core/sorting.h"
 #include "color.h"
 #include <stdio.h>
 #include <time.h>
@@ -28,9 +29,9 @@ static void print_mem(const mem_info_t *mem) {
            mem->swap_total, mem->swap_free, swap_used, mem->mem_available);
 }
 
-void render_header_now(const cpu_percent_t *cpu, const mem_info_t *mem,
-                       const load_avg_t *ld, const uptime_fmt_t *up, int users,
-                       const task_counts_t *tc) {
+void render_header(const cpu_percent_t *cpu, const mem_info_t *mem,
+                   const load_avg_t *ld, const uptime_fmt_t *up, int users,
+                   const task_counts_t *tc) {
     char tbuf[32] = {0};
     time_t t = time(NULL);
     struct tm localtime;
@@ -63,33 +64,43 @@ void render_header_now(const cpu_percent_t *cpu, const mem_info_t *mem,
     print_mem(mem);
 }
 
-/**
- * Renders the process list in a formatted manner.
- *
- * @param list A pointer to a proc_list_t structure containing process data.
- * @param hz The number of clock ticks per second (Hertz).
- */
 void render_process_list(const proc_list_t *list, long hz,
-                         unsigned int max_rows) {
+                         unsigned int max_rows, unsigned int term_cols) {
     if (!list || hz <= 0 || max_rows == 0) {
         return;
     }
 
-    // Print the header for the process list
     printf("\n");
-    printf(BOLD REVERSE
-           "%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %-*s\n" RESET,
-           5, "PID", "USER", "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU",
-           "%MEM", "TIME+", COMMAND_WIDTH, "COMMAND");
 
-    // Determine how many processes to render
-    size_t render_count = list->count;
-    if (render_count > max_rows) {
-        render_count = max_rows;
+    // BUild and print the styled, highlighted header
+    sort_by_t current_sort = sorting_get_current_column();
+    char header_buf[512] = {0};
+    int offset = 0;
+
+    // An array of column names and their widths
+    const char *cols[] = {"PID", "USER", "PR",   "NI",   "VIRT",  "RES",
+                          "SHR", "S",    "%CPU", "%MEM", "TIME+", "COMMAND"};
+    const int widths[] = {5, -8, 3, 3, 8, 8, 8, 1, 5, 5, 9, -COMMAND_WIDTH};
+
+    // Print the header with appropriate styles
+    for (int i = 0; i < (int)(sizeof(cols) / sizeof(cols[0])); i++) {
+        // If this is the sorted column, wrap it in REVERSE style
+        const char *style = (i == (int)current_sort) ? BOLD REVERSE : BOLD;
+        offset += snprintf(header_buf + offset, sizeof(header_buf) - offset,
+                           "%s%*s" RESET, style, widths[i], cols[i]);
+        if (i < 11) {
+            // Add a space after each column except the last
+            offset +=
+                snprintf(header_buf + offset, sizeof(header_buf) - offset, " ");
+        }
     }
 
+    // Print the full header, padded to the screen width
+    printf("%-*s\n", term_cols, header_buf);
+
     // Cut output if it exceeds the terminal size
-    for (size_t i = 0; i < render_count; ++i) {
+    size_t render_count = list->count > max_rows ? max_rows : list->count;
+    for (size_t i = 0; i < render_count; i++) {
         const proc_info_t *p = &list->procs[i];
 
         // Format TIME+ from clock ticks to MM:SS.ss

@@ -1,7 +1,9 @@
 // src/main.c
 #include "core/proc_iter.h"
 #include "core/process.h"
+#include "core/sorting.h"
 #include "core/system.h"
+#include "ui/input.h"
 #include "ui/render.h"
 #include "ui/terminal.h"
 #include "util/util.h"
@@ -11,6 +13,29 @@
 #include <unistd.h>
 
 #define HEADER_ROW_COUNT 7
+
+void handle_input(void) {
+    char c = '\0';
+
+    if (read(STDIN_FILENO, &c, 1) == 1) {
+        switch (c) {
+        case 'q':
+            // disable_raw_mode() is called by atexit()
+            exit(0);
+        case '<':
+        case ',':
+            sorting_prev_column();
+            break;
+        case '>':
+        case '.':
+            sorting_next_column();
+            break;
+        case 'R':
+            sorting_flip_direction();
+            break;
+        }
+    }
+}
 
 int main(int argc, char **argv) {
     unsigned interval_ms = 2000; // 2 sec
@@ -29,6 +54,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Usage: %s [interval_ms]\n", argv[0]);
         return 1;
     }
+
+    enable_raw_mode(); // Ready to handle input to change sorting
 
     cpu_times_t prev_cpu_times = {0}, now_cpu_times = {0};
     mem_info_t mem;
@@ -49,6 +76,8 @@ int main(int argc, char **argv) {
     }
 
     while (true) {
+        handle_input(); // Check for user input on each frame
+
         // Ger the current terminal size
         get_term_size(&term);
         unsigned int available_rows =
@@ -70,10 +99,14 @@ int main(int argc, char **argv) {
 
         collect_all_processes(&proc_list, mem.mem_total);
 
+        // --- Sort the process list ---
+        qsort(proc_list.procs, proc_list.count, sizeof(proc_info_t),
+              compare_procs);
+
         // --- Render Output ---
         printf("\033[H\033[J"); // Clear screen
-        render_header_now(&cpu, &mem, &ld, &up, users, &tc);
-        render_process_list(&proc_list, hz, available_rows);
+        render_header(&cpu, &mem, &ld, &up, users, &tc);
+        render_process_list(&proc_list, hz, available_rows, term.cols);
         fflush(stdout);
 
         usleep(interval_ms * 1000);
