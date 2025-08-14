@@ -45,24 +45,23 @@ int scan_task_states(TaskCounts *out) {
         if (fscanf(f, "%d (%255[^)]) %c", &pid, comm, &state) == 3) {
             out->total++;
             switch (state) {
-            case 'R':
+            case 'R': // Running
                 out->running++;
                 break;
-            case 'S':
+            case 'S': // Interruptible sleep
+            case 'D': // Uninterruptible disk sleep
+            case 'I': // Idle kernel thread
                 out->sleeping++;
                 break;
-            case 'D':
-                // Uninterruptible sleep (usually IO)
-                out->sleeping++;
-                break;
-            case 'T':
+            case 'T': // Stopped (by job control signal)
+            case 't': // Tracing stop (stopped by debugger)
                 out->stopped++;
                 break;
-            case 'Z':
+            case 'Z': // Zombie (terminated but not reaped by parent)
                 out->zombie++;
                 break;
             default:
-                // Unknown state, we can ignore it
+                // Unknown state (or very rare), we can ignore it
                 break;
             }
         }
