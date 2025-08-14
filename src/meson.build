@@ -6,6 +6,7 @@ srcs = [
   'core/process.c',
   'core/system.c',
   'ui/render.c',
+  'ui/terminal.c',
   'util/util.c',
   'main.c',
 ]

@@ -84,8 +84,9 @@ void render_header_now(const cpu_percent_t *cpu, const mem_info_t *mem,
  * @param list A pointer to a proc_list_t structure containing process data.
  * @param hz The number of clock ticks per second (Hertz).
  */
-void render_process_list(const proc_list_t *list, long hz) {
-    if (!list || hz <= 0) {
+void render_process_list(const proc_list_t *list, long hz,
+                         unsigned int max_rows) {
+    if (!list || hz <= 0 || max_rows == 0) {
         return;
     }
 
@@ -94,7 +95,14 @@ void render_process_list(const proc_list_t *list, long hz) {
            "USER", "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU", "%MEM",
            "TIME+", COMMAND_WIDTH, "COMMAND");
 
-    for (size_t i = 0; i < list->count; ++i) {
+    // Determine how many processes to render
+    size_t render_count = list->count;
+    if (render_count > max_rows) {
+        render_count = max_rows;
+    }
+
+    // Cut output if it exceeds the terminal size
+    for (size_t i = 0; i < render_count; ++i) {
         const proc_info_t *p = &list->procs[i];
 
         // Format TIME+ from clock ticks to MM:SS.ss
@@ -104,7 +112,8 @@ void render_process_list(const proc_list_t *list, long hz) {
         snprintf(time_str, sizeof(time_str), "%lu:%02llu.%02llu", minutes,
                  total_seconds % 60, (p->uptime_ticks % hz) * 100 / hz);
 
-        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s %-.*s\n",
+        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s "
+               "%-.*s\n",
                p->pid, p->user, p->priority, p->nice, p->virt_mem, p->res_mem,
                p->shr_mem, p->state, p->cpu_percent, p->mem_percent, time_str,
                COMMAND_WIDTH, p->command);

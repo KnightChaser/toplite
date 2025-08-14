@@ -3,11 +3,14 @@
 #include "core/process.h"
 #include "core/system.h"
 #include "ui/render.h"
+#include "ui/terminal.h"
 #include "util/util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#define HEADER_ROW_COUNT 7
 
 int main(int argc, char **argv) {
     unsigned interval_ms = 2000; // 2 sec
@@ -33,6 +36,7 @@ int main(int argc, char **argv) {
     uptime_fmt_t up;
     cpu_percent_t cpu;
     task_counts_t tc;
+    terminal_t term;
 
     proc_list_t proc_list;
     init_process_list(&proc_list);
@@ -45,6 +49,10 @@ int main(int argc, char **argv) {
     }
 
     while (true) {
+        // Ger the current terminal size
+        get_term_size(&term);
+        unsigned int available_rows =
+            (term.rows > HEADER_ROW_COUNT) ? term.rows - HEADER_ROW_COUNT : 0;
         // Collect data
         read_cpu_times(&now_cpu_times);
         cpu_percent(&prev_cpu_times, &now_cpu_times, &cpu);
@@ -65,7 +73,7 @@ int main(int argc, char **argv) {
         // --- Render Output ---
         printf("\033[H\033[J"); // Clear screen
         render_header_now(&cpu, &mem, &ld, &up, users, &tc);
-        render_process_list(&proc_list, hz); // Render the process list
+        render_process_list(&proc_list, hz, available_rows);
         fflush(stdout);
 
         usleep(interval_ms * 1000);
