@@ -11,7 +11,7 @@ typedef struct {
     pid_t pid;                       // Process ID
     char user[32];                   // User name of the process owner
     char priority[5];                // Process priority
-    int nice;                        // Nice value
+    long nice;                       // Nice value
     unsigned long virt_mem;          // Virtual memory size in KiB
     unsigned long res_mem;           // Resident Set Size (RSS) in KiB
     unsigned long shr_mem;           // Shared memory size (SHR) in KiB

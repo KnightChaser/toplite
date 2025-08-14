@@ -124,14 +124,26 @@ int collect_all_processes(proc_list_t *list,
         // Parse /proc/[pid]/stat
         char comm[256] = {0};
         long priority_long;
-        fscanf(stat_file,
-               "%*d (%255[^)]) %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
-               "%llu %*u %ld %d", // Basic fields from stat
-               comm, &proc_info.state, &proc_info.uptime_ticks, &priority_long,
-               &proc_info.nice);
+        fscanf(
+            stat_file,
+            "%*d (%255[^)]) %c " // Fields 1-3: pid, comm, state
+            "%*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d " // Skip
+                                                                       // 4-17
+            "%ld "  // Field 18: priority
+            "%ld "  // Field 19: nice
+            "%*ld " // Field 20: num_threads
+            "%*ld " // Field 21: itrealvalue
+            "%llu", // Field 22: starttime (uptime_ticks)
+            comm, &proc_info.state, &priority_long, &proc_info.nice,
+            &proc_info.uptime_ticks);
         fclose(stat_file);
-        snprintf(proc_info.priority, sizeof(proc_info.priority), "%ld",
-                 priority_long);
+
+        if (priority_long < 0) {
+            strncpy(proc_info.priority, "rt", sizeof(proc_info.priority) - 1);
+        } else {
+            snprintf(proc_info.priority, sizeof(proc_info.priority), "%ld",
+                     priority_long);
+        }
 
         // Fetch UID and memory info from /proc/[pid]/status
         char status_path[256] = {0};

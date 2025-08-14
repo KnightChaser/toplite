@@ -112,7 +112,7 @@ void render_process_list(const proc_list_t *list, long hz,
         snprintf(time_str, sizeof(time_str), "%lu:%02llu.%02llu", minutes,
                  total_seconds % 60, (p->uptime_ticks % hz) * 100 / hz);
 
-        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s "
+        printf("%5d %-8.8s %3.3s %3ld %8lu %8lu %8lu %c %5.1f %5.1f %9s "
                "%-.*s\n",
                p->pid, p->user, p->priority, p->nice, p->virt_mem, p->res_mem,
                p->shr_mem, p->state, p->cpu_percent, p->mem_percent, time_str,
