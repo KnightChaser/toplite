@@ -7,29 +7,12 @@
 #include <string.h>
 #include <unistd.h> // For sysconf
 
-/**
- * Initializes a process list (proc_list_t).
- * This function sets the initial state of the process list, preparing it for
- * adding processes.
- *
- * @param list Pointer to the proc_list_t to initialize.
- */
 void init_process_list(proc_list_t *list) {
     list->procs = NULL;
     list->count = 0;
     list->capacity = 0;
 }
 
-/**
- * Adds a single process to the process list (proc_list_t)
- * This function appends a new process information (proc_info_t) to the list,
- * resizing it if necessary.
- *
- * @param list Pointer to the proc_list_t where the process will be added.
- * @param process_info The proc_info_t structure containing the process
- * information to add.
- * @return 0 on success, -1 on error (e.g., if memory allocation fails).
- */
 static int add_process_to_list(proc_list_t *list,
                                const proc_info_t process_info) {
     if (list->count == list->capacity) {
@@ -51,13 +34,6 @@ static int add_process_to_list(proc_list_t *list,
     return 0; // Success
 }
 
-/**
- * For a specific process ID, get the command line arguments.
- *
- * @param pid The process ID to query.
- * @param buffer Buffer to store the command line arguments.
- * @param size Size of the buffer.
- */
 static void get_command_line(pid_t pid,    // [in]
                              char *buffer, // [out]
                              size_t size   // [in]

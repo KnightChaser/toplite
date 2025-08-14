@@ -86,11 +86,65 @@ typedef struct {
     unsigned zombie;
 } task_counts_t;
 
+/**
+ * @brief Reads the system's memory information from /proc/meminfo.
+ * And, it populates the MemInfo structure with the data read.
+ *
+ * @param cpu_times Pointer to a cpu_times_t structure to populate.
+ * @return 0 on success, -1 on failure.
+ */
 int read_cpu_times(cpu_times_t *out);
+
+/**
+ * @brief Reads the system's memory information from /proc/meminfo.
+ * And, it populates the mem_info_t structure with the data read.
+ *
+ * @param mem_info Pointer to a mem_info_t structure to populate.
+ * @return 0 on success, -1 on failure.
+ */
 int read_meminfo(mem_info_t *out);
+
+/**
+ * @brief Reads the system's uptime from /proc/uptime and formats it into days,
+ * hours, and minutes.
+ *
+ * @param load_avg Pointer to a load_avg_t structure to populate with load
+ * @return 0 on success, -1 on failure.
+ */
 int read_loadavg(load_avg_t *out);
+
+/**
+ * @brief Reads the system's uptime from /proc/uptime and returns it in seconds.
+ *
+ * @param uptime_sec Pointer to a double to store the uptime in seconds.
+ * @return 0 on success, -1 on failure.
+ */
 int read_uptime(double *uptime_sec);
+
+/**
+ * @brief Counts the number of logged-in users by reading the utmp entries.
+ *
+ * @return The count of logged-in users.
+ */
 int count_logged_in_users(void); // utmp
+
+/**
+ * @brief Calculates the CPU usage percentages (for cpu_times_t structure) based
+ * on the previous and current CPU times.
+ *
+ * @param prev Pointer to the previous CpuTimes structure.
+ * @param now Pointer to the current CpuTimes structure.
+ * @param percentages Pointer to a CpuPercentages structure to populate with
+ *                    calculated percentages.
+ */
 void cpu_percent(const cpu_times_t *prev, const cpu_times_t *now,
                  cpu_percent_t *pct);
+
+/**
+ * @brief Formats the uptime in seconds into days, hours, and minutes.
+ *
+ * @param up The uptime in seconds.
+ * @param o Pointer to an uptime_fmt_t structure to populate with formatted
+ *          uptime.
+ */
 void fmt_uptime(double up, uptime_fmt_t *o);

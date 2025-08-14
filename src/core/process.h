@@ -31,7 +31,32 @@ typedef struct {
     size_t capacity;
 } proc_list_t;
 
+/**
+ * @brief Initializes a process list (proc_list_t).
+ * @details This function sets the initial state of the process list, preparing
+ * it for adding processes.
+ *
+ * @param list Pointer to the proc_list_t to initialize.
+ */
 void init_process_list(proc_list_t *list);
+
+/**
+ * @brief Adds a single process to the process list (proc_list_t)
+ * @details This function appends a new process information (proc_info_t) to the
+ * list, resizing it if necessary.
+ *
+ * @param list Pointer to the proc_list_t where the process will be added.
+ * @param process_info The proc_info_t structure containing the process
+ * information to add.
+ * @return 0 on success, -1 on error (e.g., if memory allocation fails).
+ */
 int collect_all_processes(proc_list_t *list,
                           unsigned long long system_mem_total);
+/**
+ * @brief Frees the memory allocated for a process list (proc_list_t).
+ * @details This function releases all memory used by the process list,
+ * including the array of processes.
+ *
+ * @param list Pointer to the proc_list_t to free.
+ */
 void free_process_list(proc_list_t *list);

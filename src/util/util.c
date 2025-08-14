@@ -6,15 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/**
- * Reads the entire contents of a text file into a dynamically allocated buffer.
- *
- * @param path The path to the file to read.
- * @param out Pointer to a char*  where the content will be stored.
- * @param len Pointer to a size_t where the length of the content will be
- * stored.
- * @return true on success, false on failure.
- */
 bool read_text_file(const char *path, // [in]
                     char **out,       // [out]
                     size_t *len       // [out]
@@ -89,15 +80,6 @@ bool read_text_file(const char *path, // [in]
     return true; // Successfully read the file!
 }
 
-/**
- * Convert a string to an unsigned long long integer safely.
- * Skips leading whitespace. The input pointer 'p' is advanced past
- * the parsed number. This function does not handle negative numbers.
- *
- * @param p Pointer to the string to convert. The pointer will be updated
- * to point to the first character after the converted number.
- * @return The converted unsigned long long value.
- */
 unsigned long long strtoull_safe(const char **p) {
     const char *s = *p;
 
@@ -118,11 +100,6 @@ unsigned long long strtoull_safe(const char **p) {
     return value;
 }
 
-/**
- * Get the system's memory page size
- *
- * @return The page size in bytes, or -1 on error.
- */
 long sys_pagesize(void) {
     long pagesize = sysconf(_SC_PAGESIZE);
     if (pagesize < 0) {
@@ -132,11 +109,6 @@ long sys_pagesize(void) {
     return pagesize;
 }
 
-/**
- * Get the system's clock ticks per second (USER_HZ)
- *
- * @return The number of clock ticks per second, or -1 on error.
- */
 long sys_hz(void) {
     long hz = sysconf(_SC_CLK_TCK);
     if (hz < 0) {

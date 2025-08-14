@@ -7,13 +7,6 @@
 #include <time.h>
 #include <utmp.h>
 
-/**
- * Reads the system's memory information from /proc/meminfo.
- * Populates the MemInfo structure with the data read.
- *
- * @param cpu_times Pointer to a cpu_times_t structure to populate.
- * @return 0 on success, -1 on failure.
- */
 int read_cpu_times(cpu_times_t *cpu_times) {
     char *buf;
     size_t bytes_read;
@@ -44,13 +37,6 @@ int read_cpu_times(cpu_times_t *cpu_times) {
     return 0;
 }
 
-/**
- * Reads the system's memory information from /proc/meminfo.
- * Populates the mem_info_t structure with the data read.
- *
- * @param mem_info Pointer to a mem_info_t structure to populate.
- * @return 0 on success, -1 on failure.
- */
 int read_meminfo(mem_info_t *mem_info) {
     char *buf;
     size_t bytes_read;
@@ -85,13 +71,6 @@ int read_meminfo(mem_info_t *mem_info) {
     return 0;
 }
 
-/**
- * Reads the system's uptime from /proc/uptime and formats it into days, hours,
- * and minutes.
- *
- * @param load_avg Pointer to a load_avg_t structure to populate with load
- * @return 0 on success, -1 on failure.
- */
 int read_loadavg(load_avg_t *load_avg) {
     FILE *f = fopen("/proc/loadavg", "r");
     if (!f) {
@@ -108,12 +87,6 @@ int read_loadavg(load_avg_t *load_avg) {
     return 0;
 }
 
-/**
- * Reads the system's uptime from /proc/uptime and returns it in seconds.
- *
- * @param uptime_sec Pointer to a double to store the uptime in seconds.
- * @return 0 on success, -1 on failure.
- */
 int read_uptime(double *uptime_sec) {
     FILE *f = fopen("/proc/uptime", "r");
     if (!f) {
@@ -129,11 +102,6 @@ int read_uptime(double *uptime_sec) {
     return 0;
 }
 
-/**
- * Counts the number of logged-in users by reading the utmp entries.
- *
- * @return The count of logged-in users.
- */
 int count_logged_in_users(void) {
     int count = 0;
     setutent();
@@ -163,15 +131,6 @@ static unsigned long long total_jiffies(const cpu_times_t *cpu_times) {
            cpu_times->guest_nice;
 }
 
-/**
- * Calculates the CPU usage percentages based on the previous and current CPU
- * times.
- *
- * @param prev Pointer to the previous CpuTimes structure.
- * @param now Pointer to the current CpuTimes structure.
- * @param percentages Pointer to a CpuPercentages structure to populate with
- *                    calculated percentages.
- */
 void cpu_percent(const cpu_times_t *prev, const cpu_times_t *now,
                  cpu_percent_t *percentages) {
     double total = (double)(total_jiffies(now) - total_jiffies(prev));
@@ -197,13 +156,6 @@ void cpu_percent(const cpu_times_t *prev, const cpu_times_t *now,
 #undef D
 }
 
-/**
- * Formats the uptime in seconds into days, hours, and minutes.
- *
- * @param up The uptime in seconds.
- * @param o Pointer to an uptime_fmt_t structure to populate with formatted
- *          uptime.
- */
 void fmt_uptime(double up, uptime_fmt_t *o) {
     unsigned long mins = (unsigned long)(up / 60);
     o->days = mins / (60 * 24);
