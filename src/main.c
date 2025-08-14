@@ -10,31 +10,62 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #define HEADER_ROW_COUNT 7
 
+/**
+ * @brief Checks for and handles user keyboard input in a non-blocking way.
+ * @details Uses select() to poll stdin for available data. If a key is pressed,
+ *          it updates the global sorting state accordingly.
+ */
 void handle_input(void) {
-    char c = '\0';
+    fd_set read_fds;
+    struct timeval timeout;
+    int ret;
 
-    if (read(STDIN_FILENO, &c, 1) == 1) {
-        switch (c) {
-        case 'q':
-            // disable_raw_mode() is called by atexit()
-            exit(0);
-        case '<':
-        case ',':
-            sorting_prev_column();
-            break;
-        case '>':
-        case '.':
-            sorting_next_column();
-            break;
-        case 'R':
-            sorting_flip_direction();
-            break;
+    FD_ZERO(&read_fds);
+    FD_SET(STDIN_FILENO, &read_fds);
+
+    // Set a zero-timeout.
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    // Use select to check if there is input available on stdin
+    ret = select(STDIN_FILENO + 1, &read_fds, NULL, NULL, &timeout);
+    if (ret < 0) {
+        perror("select");
+        exit(EXIT_FAILURE);
+    }
+
+    if (ret > 0 && FD_ISSET(STDIN_FILENO, &read_fds)) {
+        // Data is available, now we can read without blocking.
+        char c = '\0';
+        if (read(STDIN_FILENO, &c, 1) == 1) {
+            switch (c) {
+            case 'q':
+                // disable_raw_mode() is registered with atexit and will be
+                // called automatically on exit().
+                exit(0);
+                break;
+            case '<':
+            case ',':
+                sorting_prev_column();
+                break;
+            case '>':
+            case '.':
+                sorting_next_column();
+                break;
+            case 'R':
+                sorting_flip_direction();
+                break;
+            }
         }
     }
+
+    // If ret is 0, it means timeout was reached (no input), so we do nothing.
 }
 
 int main(int argc, char **argv) {
