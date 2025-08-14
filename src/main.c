@@ -27,15 +27,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    CpuTimes prev_cpu_times = {0}, now_cpu_times = {0};
-    MemInfo mem;
-    LoadAvg ld;
-    UptimeFormat up;
-    CpuPercentages cpu;
-    TaskCounts tc;
+    cpu_times_t prev_cpu_times = {0}, now_cpu_times = {0};
+    mem_info_t mem;
+    load_avg_t ld;
+    uptime_fmt_t up;
+    cpu_percent_t cpu;
+    task_counts_t tc;
 
-    ProcessList p_list;
-    init_process_list(&p_list);
+    proc_list_t proc_list;
+    init_process_list(&proc_list);
     long hz = sys_hz();
 
     // Prime CPU times
@@ -60,18 +60,18 @@ int main(int argc, char **argv) {
         int users = count_logged_in_users();
         scan_task_states(&tc);
 
-        collect_all_processes(&p_list, mem.mem_total);
+        collect_all_processes(&proc_list, mem.mem_total);
 
         // --- Render Output ---
         printf("\033[H\033[J"); // Clear screen
         render_header_now(&cpu, &mem, &ld, &up, users, &tc);
-        render_process_list(&p_list, hz); // Render the process list
+        render_process_list(&proc_list, hz); // Render the process list
         fflush(stdout);
 
         usleep(interval_ms * 1000);
     }
 
     // cleanup
-    free_process_list(&p_list);
+    free_process_list(&proc_list);
     return 0;
 }

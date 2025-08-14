@@ -2,4 +2,4 @@
 #pragma once
 #include "system.h"
 
-int scan_task_states(TaskCounts *out);
+int scan_task_states(task_counts_t *out);

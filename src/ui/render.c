@@ -4,12 +4,15 @@
 #include <stdio.h>
 #include <time.h>
 
+// Define a max width for the command column for clearer UI output
+#define COMMAND_WIDTH 40
+
 /**
- * Prints the CPU percentages in a formatted manner.
+ * Prints memory accounting information in a formatted manner.
  *
- * @param cpu A pointer to a CpuPercentages structure containing CPU usage data.
+ * @param mem A pointer to a mem_info_t structure containing memory data.
  */
-static void print_mem(const MemInfo *mem) {
+static void print_mem(const mem_info_t *mem) {
     // The "buff/cache" line in 'top' is a sum of Buffers, Cached, and
     // SReclaimable, which represents memory that can be quickly freed
     // by the kernel for application use. Shmem is subtracted as it is
@@ -33,17 +36,16 @@ static void print_mem(const MemInfo *mem) {
 /**
  * Renders the header information for the system status.
  *
- * @param cpu A pointer to a CpuPercentages structure containing CPU usage data.
- * @param mem A pointer to a MemInfo structure containing memory information.
- * @param ld A pointer to a LoadAvg structure containing load averages.
- * @param up A pointer to a UptimeFormat structure containing uptime
- * information.
+ * @param cpu A pointer to a cpu_percent_t structure containing CPU usage data.
+ * @param mem A pointer to a mem_info_t structure containing memory data.
+ * @param ld A pointer to a load_avg_t structure containing load averages.
+ * @param up A pointer to an uptime_fmt_t structure containing system uptime.
  * @param users The number of users currently logged in.
- * @param tc A pointer to a TaskCounts structure containing task counts.
+ * @param tc A pointer to a task_counts_t structure containing task counts.
  */
-void render_header_now(const CpuPercentages *cpu, const MemInfo *mem,
-                       const LoadAvg *ld, const UptimeFormat *up, int users,
-                       const TaskCounts *tc) {
+void render_header_now(const cpu_percent_t *cpu, const mem_info_t *mem,
+                       const load_avg_t *ld, const uptime_fmt_t *up, int users,
+                       const task_counts_t *tc) {
     char tbuf[32] = {0};
     time_t t = time(NULL);
     struct tm localtime;
@@ -79,34 +81,32 @@ void render_header_now(const CpuPercentages *cpu, const MemInfo *mem,
 /**
  * Renders the process list in a formatted manner.
  *
- * @param list A pointer to a ProcessList structure containing process data.
- * @param hz The number of clock ticks per second (used for time formatting).
+ * @param list A pointer to a proc_list_t structure containing process data.
+ * @param hz The number of clock ticks per second (Hertz).
  */
-void render_process_list(const ProcessList *list, long hz) {
-    if (!list || hz <= 0)
+void render_process_list(const proc_list_t *list, long hz) {
+    if (!list || hz <= 0) {
         return;
+    }
 
     // Print the header for the process list
-    printf("\n"); // Add a newline after the system info header
-    printf("%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %s\n", 5, "PID", "USER",
-           "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU", "%MEM", "TIME+",
-           "COMMAND");
+    printf("%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %-*s\n", 5, "PID",
+           "USER", "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU", "%MEM",
+           "TIME+", COMMAND_WIDTH, "COMMAND");
 
     for (size_t i = 0; i < list->count; ++i) {
-        const ProcessInfo *p = &list->procs[i];
+        const proc_info_t *p = &list->procs[i];
 
         // Format TIME+ from clock ticks to MM:SS.ss
         unsigned long long total_seconds = p->uptime_ticks / hz;
         unsigned long minutes = total_seconds / 60;
-        unsigned long seconds = total_seconds % 60;
-        unsigned long hundredths = (p->uptime_ticks % hz) * 100 / hz;
-        char time_str[16];
-        snprintf(time_str, sizeof(time_str), "%lu:%02lu.%02lu", minutes,
-                 seconds, hundredths);
+        char time_str[16] = {0};
+        snprintf(time_str, sizeof(time_str), "%lu:%02llu.%02llu", minutes,
+                 total_seconds % 60, (p->uptime_ticks % hz) * 100 / hz);
 
-        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s %s\n",
+        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s %-.*s\n",
                p->pid, p->user, p->priority, p->nice, p->virt_mem, p->res_mem,
                p->shr_mem, p->state, p->cpu_percent, p->mem_percent, time_str,
-               p->command);
+               COMMAND_WIDTH, p->command);
     }
 }

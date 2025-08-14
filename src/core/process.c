@@ -8,33 +8,35 @@
 #include <unistd.h> // For sysconf
 
 /**
- * Initialize a ProcessList structure.
- * This function sets the initial state of the process list to empty.
+ * Initializes a process list (proc_list_t).
+ * This function sets the initial state of the process list, preparing it for
+ * adding processes.
  *
- * @param list Pointer to the ProcessList to initialize.
+ * @param list Pointer to the proc_list_t to initialize.
  */
-void init_process_list(ProcessList *list) {
+void init_process_list(proc_list_t *list) {
     list->procs = NULL;
     list->count = 0;
     list->capacity = 0;
 }
 
 /**
- * Adds a single process to the ProcessList.
- * This function appends a new ProcessInfo to the list, resizing it if
- * necessary.
+ * Adds a single process to the process list (proc_list_t)
+ * This function appends a new process information (proc_info_t) to the list,
+ * resizing it if necessary.
  *
- * @param list Pointer to the ProcessList where the process will be added.
- * @param process_info The ProcessInfo structure containing the process details.
- * @return 0 on success, -1 on failure (e.g., if memory allocation fails).
+ * @param list Pointer to the proc_list_t where the process will be added.
+ * @param process_info The proc_info_t structure containing the process
+ * information to add.
+ * @return 0 on success, -1 on error (e.g., if memory allocation fails).
  */
-static int add_process_to_list(ProcessList *list,
-                               const ProcessInfo process_info) {
+static int add_process_to_list(proc_list_t *list,
+                               const proc_info_t process_info) {
     if (list->count == list->capacity) {
         // Double the list if necessary
         size_t new_capacity = (list->capacity == 0) ? 64 : list->capacity * 2;
-        ProcessInfo *new_procs =
-            realloc(list->procs, new_capacity * sizeof(ProcessInfo));
+        proc_info_t *new_procs =
+            realloc(list->procs, new_capacity * sizeof(proc_info_t));
         if (!new_procs) {
             perror("Failed to allocate memory for process list");
             return -1; // Memory allocation failed
@@ -86,12 +88,13 @@ static void get_command_line(pid_t pid,    // [in]
  * /proc/[pid]/status files, and calculates memory usage percentages based on
  * the total system memory.
  *
- * @param list Pointer to the ProcessList to fill with process information.
- * @param system_mem_total Total system memory in KiB (used for %MEM
- * calculation).
- * @return 0 on success, -1 on error (e.g., if /proc cannot be opened).
+ * @param list Pointer to the proc_list_t where processes will be stored.
+ * @param system_mem_total Total system memory in kilobytes (from
+ * /proc/meminfo).
+ * @return 0 on success, -1 on error (e.g., if /proc cannot be opened or
+ *         if memory allocation fails).
  */
-int collect_all_processes(ProcessList *list,
+int collect_all_processes(proc_list_t *list,
                           unsigned long long system_mem_total) {
     DIR *d = opendir("/proc");
     if (!d) {
@@ -109,8 +112,8 @@ int collect_all_processes(ProcessList *list,
         }
 
         pid_t pid = atoi(e->d_name);
-        ProcessInfo p_info = {0};
-        p_info.pid = pid;
+        proc_info_t proc_info = {0};
+        proc_info.pid = pid;
 
         char stat_path[256] = {0};
         snprintf(stat_path, sizeof(stat_path), "/proc/%d/stat", pid);
@@ -124,10 +127,10 @@ int collect_all_processes(ProcessList *list,
         fscanf(stat_file,
                "%*d (%255[^)]) %c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
                "%llu %*u %ld %d", // Basic fields from stat
-               comm, &p_info.state, &p_info.uptime_ticks, &priority_long,
-               &p_info.nice);
+               comm, &proc_info.state, &proc_info.uptime_ticks, &priority_long,
+               &proc_info.nice);
         fclose(stat_file);
-        snprintf(p_info.priority, sizeof(p_info.priority), "%ld",
+        snprintf(proc_info.priority, sizeof(proc_info.priority), "%ld",
                  priority_long);
 
         // Fetch UID and memory info from /proc/[pid]/status
@@ -143,9 +146,11 @@ int collect_all_processes(ProcessList *list,
         while (fgets(line, sizeof(line), status_file)) {
             if (sscanf(line, "Uid:\t%u", &uid) == 1) {
                 // Done with Uid, continue to get memory
-            } else if (sscanf(line, "VmSize:\t%lu kB", &p_info.virt_mem) == 1) {
-            } else if (sscanf(line, "VmRSS:\t%lu kB", &p_info.res_mem) == 1) {
-            } else if (sscanf(line, "RssShmem:\t%lu kB", &p_info.shr_mem) ==
+            } else if (sscanf(line, "VmSize:\t%lu kB", &proc_info.virt_mem) ==
+                       1) {
+            } else if (sscanf(line, "VmRSS:\t%lu kB", &proc_info.res_mem) ==
+                       1) {
+            } else if (sscanf(line, "RssShmem:\t%lu kB", &proc_info.shr_mem) ==
                        1) {
             }
         }
@@ -154,30 +159,30 @@ int collect_all_processes(ProcessList *list,
         // Convert UID to username
         struct passwd *pw = getpwuid(uid);
         if (pw) {
-            strncpy(p_info.user, pw->pw_name, sizeof(p_info.user) - 1);
+            strncpy(proc_info.user, pw->pw_name, sizeof(proc_info.user) - 1);
         } else {
             // Failed? Use UID as a fallback
-            snprintf(p_info.user, sizeof(p_info.user), "%u", uid);
+            snprintf(proc_info.user, sizeof(proc_info.user), "%u", uid);
         }
 
         // Get full command line
-        get_command_line(pid, p_info.command, sizeof(p_info.command));
-        if (p_info.command[0] == '\0') {
+        get_command_line(pid, proc_info.command, sizeof(proc_info.command));
+        if (proc_info.command[0] == '\0') {
             // Fallback to comm from stat if cmdline is empty (e.g. kernel
             // threads)
-            strncpy(p_info.command, comm, sizeof(p_info.command) - 1);
+            strncpy(proc_info.command, comm, sizeof(proc_info.command) - 1);
         }
 
         // Calculate %MEM
         if (system_mem_total > 0) {
-            p_info.mem_percent =
-                ((double)p_info.res_mem / system_mem_total) * 100.0;
+            proc_info.mem_percent =
+                ((double)proc_info.res_mem / system_mem_total) * 100.0;
         }
 
         // TODO: Calculate %CPU (this is complex and will be done later)
-        p_info.cpu_percent = 0.0;
+        proc_info.cpu_percent = 0.0;
 
-        if (add_process_to_list(list, p_info) != 0) {
+        if (add_process_to_list(list, proc_info) != 0) {
             break; // Stop if we can't add more processes
         }
     }

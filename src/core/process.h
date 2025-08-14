@@ -20,18 +20,18 @@ typedef struct {
     double mem_percent;              // Memory usage percentage
     unsigned long long uptime_ticks; // Uptime in ticks
     char command[256];               // Command line of the process
-} ProcessInfo;
+} proc_info_t;
 
 /**
  * Represents a dynamically-sized list of processes.
  */
 typedef struct {
-    ProcessInfo *procs;
+    proc_info_t *procs;
     size_t count;
     size_t capacity;
-} ProcessList;
+} proc_list_t;
 
-void init_process_list(ProcessList *list);
-int collect_all_processes(ProcessList *list,
+void init_process_list(proc_list_t *list);
+int collect_all_processes(proc_list_t *list,
                           unsigned long long system_mem_total);
-void free_process_list(ProcessList *list);
+void free_process_list(proc_list_t *list);

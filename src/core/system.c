@@ -11,10 +11,10 @@
  * Reads the system's memory information from /proc/meminfo.
  * Populates the MemInfo structure with the data read.
  *
- * @param cpu_times Pointer to a CpuTimes structure to populate.
+ * @param cpu_times Pointer to a cpu_times_t structure to populate.
  * @return 0 on success, -1 on failure.
  */
-int read_cpu_times(CpuTimes *cpu_times) {
+int read_cpu_times(cpu_times_t *cpu_times) {
     char *buf;
     size_t bytes_read;
     if (!read_text_file("/proc/stat", &buf, &bytes_read)) {
@@ -46,12 +46,12 @@ int read_cpu_times(CpuTimes *cpu_times) {
 
 /**
  * Reads the system's memory information from /proc/meminfo.
- * Populates the MemInfo structure with the data read.
+ * Populates the mem_info_t structure with the data read.
  *
- * @param mem_info Pointer to a MemInfo structure to populate.
+ * @param mem_info Pointer to a mem_info_t structure to populate.
  * @return 0 on success, -1 on failure.
  */
-int read_meminfo(MemInfo *mem_info) {
+int read_meminfo(mem_info_t *mem_info) {
     char *buf;
     size_t bytes_read;
     if (!read_text_file("/proc/meminfo", &buf, &bytes_read)) {
@@ -60,7 +60,7 @@ int read_meminfo(MemInfo *mem_info) {
 
     // Simple line scan
     char *save, *line = strtok_r(buf, "\n", &save);
-    memset(mem_info, 0, sizeof(MemInfo));
+    memset(mem_info, 0, sizeof(mem_info_t));
     while (line) {
         // Keep MemInfo in KiB to match "KiB Mem" output
         if (sscanf(line, "MemTotal: %llu kB", &mem_info->mem_total) == 1) {
@@ -89,10 +89,10 @@ int read_meminfo(MemInfo *mem_info) {
  * Reads the system's uptime from /proc/uptime and formats it into days, hours,
  * and minutes.
  *
- * @param uptime Pointer to a UptimeFormat structure to populate.
+ * @param load_avg Pointer to a load_avg_t structure to populate with load
  * @return 0 on success, -1 on failure.
  */
-int read_loadavg(LoadAvg *load_avg) {
+int read_loadavg(load_avg_t *load_avg) {
     FILE *f = fopen("/proc/loadavg", "r");
     if (!f) {
         return -1;
@@ -153,10 +153,10 @@ int count_logged_in_users(void) {
  * Simply calculates the total jiffies from the CpuTimes structure.
  * This is the sum of all CPU time fields.
  *
- * @param cpu_times Pointer to a CpuTimes structure.
+ * @param cpu_times Pointer to a CpuTimes structure containing CPU times.
  * @return The total jiffies as an unsigned long long.
  */
-static unsigned long long total_jiffies(const CpuTimes *cpu_times) {
+static unsigned long long total_jiffies(const cpu_times_t *cpu_times) {
     return cpu_times->user + cpu_times->nice + cpu_times->system +
            cpu_times->idle + cpu_times->iowait + cpu_times->irq +
            cpu_times->softirq + cpu_times->steal + cpu_times->guest +
@@ -172,13 +172,13 @@ static unsigned long long total_jiffies(const CpuTimes *cpu_times) {
  * @param percentages Pointer to a CpuPercentages structure to populate with
  *                    calculated percentages.
  */
-void cpu_percent(const CpuTimes *prev, const CpuTimes *now,
-                 CpuPercentages *percentages) {
+void cpu_percent(const cpu_times_t *prev, const cpu_times_t *now,
+                 cpu_percent_t *percentages) {
     double total = (double)(total_jiffies(now) - total_jiffies(prev));
     if (total <= 0) {
         // If total is zero or negative, we cannot calculate percentages
         // set all percentages to zero and id to 100%
-        memset(percentages, 0, sizeof(CpuPercentages));
+        memset(percentages, 0, sizeof(cpu_percent_t));
         percentages->id = 100.0; // 100 percent idle
         return;
     }
@@ -201,10 +201,10 @@ void cpu_percent(const CpuTimes *prev, const CpuTimes *now,
  * Formats the uptime in seconds into days, hours, and minutes.
  *
  * @param up The uptime in seconds.
- * @param o Pointer to a UptimeFormat structure to populate with formatted
+ * @param o Pointer to an uptime_fmt_t structure to populate with formatted
  *          uptime.
  */
-void fmt_uptime(double up, UptimeFormat *o) {
+void fmt_uptime(double up, uptime_fmt_t *o) {
     unsigned long mins = (unsigned long)(up / 60);
     o->days = mins / (60 * 24);
     o->hours = (mins / 60) % 24;

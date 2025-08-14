@@ -17,7 +17,7 @@ typedef struct {
     unsigned long long steal;      // Time stolen from a virtual machine
     unsigned long long guest;      // Guest time
     unsigned long long guest_nice; // Guest time (nice processes)
-} CpuTimes;
+} cpu_times_t;
 
 /**
  * A structure that represents the system's memory information.
@@ -34,7 +34,7 @@ typedef struct {
     unsigned long long mem_available; // Available memory in bytes
     unsigned long long swap_total;    // Total swap space in bytes
     unsigned long long swap_free;     // Free swap space in bytes
-} MemInfo;
+} mem_info_t;
 
 /**
  * A structure that represents the system's load averages.
@@ -44,7 +44,7 @@ typedef struct {
     double load1;  // Load average for the last 1 minute
     double load5;  // Load average for the last 5 minutes
     double load15; // Load average for the last 15 minutes
-} LoadAvg;
+} load_avg_t;
 
 /**
  * A structure that represents the system's uptime.
@@ -55,7 +55,7 @@ typedef struct {
     unsigned days;    // Number of days
     unsigned hours;   // Number of hours
     unsigned minutes; // Number of minutes
-} UptimeFormat;
+} uptime_fmt_t;
 
 /**
  * A structure that represents the CPU usage statistics.
@@ -71,7 +71,7 @@ typedef struct {
     double hi; // Hardware interrupt time percentage
     double si; // Software interrupt time percentage
     double st; // Steal time percentage
-} CpuPercentages;
+} cpu_percent_t;
 
 /**
  * A structure that represents the counts of various task states in the system.
@@ -84,13 +84,13 @@ typedef struct {
     unsigned sleeping;
     unsigned stopped;
     unsigned zombie;
-} TaskCounts;
+} task_counts_t;
 
-int read_cpu_times(CpuTimes *out);
-int read_meminfo(MemInfo *out);
-int read_loadavg(LoadAvg *out);
+int read_cpu_times(cpu_times_t *out);
+int read_meminfo(mem_info_t *out);
+int read_loadavg(load_avg_t *out);
 int read_uptime(double *uptime_sec);
 int count_logged_in_users(void); // utmp
-void cpu_percent(const CpuTimes *prev, const CpuTimes *now,
-                 CpuPercentages *pct);
-void fmt_uptime(double up, UptimeFormat *o);
+void cpu_percent(const cpu_times_t *prev, const cpu_times_t *now,
+                 cpu_percent_t *pct);
+void fmt_uptime(double up, uptime_fmt_t *o);
