@@ -91,9 +91,11 @@ void render_process_list(const proc_list_t *list, long hz,
     }
 
     // Print the header for the process list
-    printf("%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %-*s\n", 5, "PID",
-           "USER", "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU", "%MEM",
-           "TIME+", COMMAND_WIDTH, "COMMAND");
+    printf("\n");
+    printf(BOLD REVERSE
+           "%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %-*s\n" RESET,
+           5, "PID", "USER", "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU",
+           "%MEM", "TIME+", COMMAND_WIDTH, "COMMAND");
 
     // Determine how many processes to render
     size_t render_count = list->count;
