@@ -1,4 +1,8 @@
 # src/meson.build
+
+# External dependencies
+uthash_dir = include_directories('dep/uthash/src')
+
 inc = include_directories('.', 'core', 'ui')
 
 srcs = [
@@ -13,4 +17,12 @@ srcs = [
   'main.c',
 ]
 
-executable('toplite', srcs, include_directories: inc, install: true)
+executable(
+  'toplite',
+  srcs,
+  include_directories: [
+    inc,
+    uthash_dir,
+  ],
+  install: true,
+)
