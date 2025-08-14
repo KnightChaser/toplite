@@ -75,3 +75,38 @@ void render_header_now(const CpuPercentages *cpu, const MemInfo *mem,
 
     print_mem(mem);
 }
+
+/**
+ * Renders the process list in a formatted manner.
+ *
+ * @param list A pointer to a ProcessList structure containing process data.
+ * @param hz The number of clock ticks per second (used for time formatting).
+ */
+void render_process_list(const ProcessList *list, long hz) {
+    if (!list || hz <= 0)
+        return;
+
+    // Print the header for the process list
+    printf("\n"); // Add a newline after the system info header
+    printf("%*s %-8s %3s %3s %8s %8s %8s %c %5s %5s %9s %s\n", 5, "PID", "USER",
+           "PR", "NI", "VIRT", "RES", "SHR", 'S', "%CPU", "%MEM", "TIME+",
+           "COMMAND");
+
+    for (size_t i = 0; i < list->count; ++i) {
+        const ProcessInfo *p = &list->procs[i];
+
+        // Format TIME+ from clock ticks to MM:SS.ss
+        unsigned long long total_seconds = p->uptime_ticks / hz;
+        unsigned long minutes = total_seconds / 60;
+        unsigned long seconds = total_seconds % 60;
+        unsigned long hundredths = (p->uptime_ticks % hz) * 100 / hz;
+        char time_str[16];
+        snprintf(time_str, sizeof(time_str), "%lu:%02lu.%02lu", minutes,
+                 seconds, hundredths);
+
+        printf("%5d %-8.8s %3.3s %3d %8lu %8lu %8lu %c %5.1f %5.1f %9s %s\n",
+               p->pid, p->user, p->priority, p->nice, p->virt_mem, p->res_mem,
+               p->shr_mem, p->state, p->cpu_percent, p->mem_percent, time_str,
+               p->command);
+    }
+}

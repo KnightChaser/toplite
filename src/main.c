@@ -1,7 +1,9 @@
 // src/main.c
 #include "core/proc_iter.h"
+#include "core/process.h"
 #include "core/system.h"
 #include "ui/render.h"
+#include "util/util.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,10 +30,13 @@ int main(int argc, char **argv) {
     CpuTimes prev_cpu_times = {0}, now_cpu_times = {0};
     MemInfo mem;
     LoadAvg ld;
-    double uptimeSeconds = 0.0;
     UptimeFormat up;
     CpuPercentages cpu;
     TaskCounts tc;
+
+    ProcessList p_list;
+    init_process_list(&p_list);
+    long hz = sys_hz();
 
     // Prime CPU times
     if (read_cpu_times(&prev_cpu_times) != 0) {
@@ -40,36 +45,33 @@ int main(int argc, char **argv) {
     }
 
     while (true) {
-        usleep(interval_ms * 1000);
-
-        if (read_cpu_times(&now_cpu_times) != 0) {
-            // Error reading CPU times
-            continue;
-        }
-
+        // Collect data
+        read_cpu_times(&now_cpu_times);
         cpu_percent(&prev_cpu_times, &now_cpu_times, &cpu);
         prev_cpu_times = now_cpu_times;
 
-        if (read_meminfo(&mem) != 0) {
-            continue;
-        }
-        if (read_loadavg(&ld) != 0) {
-            continue;
-        }
-        if (read_uptime(&uptimeSeconds) != 0) {
-            continue;
-        }
+        read_meminfo(&mem);
+        read_loadavg(&ld);
 
+        double uptimeSeconds;
+        read_uptime(&uptimeSeconds);
         fmt_uptime(uptimeSeconds, &up);
+
         int users = count_logged_in_users();
+        scan_task_states(&tc);
 
-        if (scan_task_states(&tc) != 0) {
-            continue;
-        }
+        collect_all_processes(&p_list, mem.mem_total);
 
-        // Clear screen like top command, dead simple
-        printf("\033[H\033[J");
+        // --- Render Output ---
+        printf("\033[H\033[J"); // Clear screen
         render_header_now(&cpu, &mem, &ld, &up, users, &tc);
+        render_process_list(&p_list, hz); // Render the process list
         fflush(stdout);
+
+        usleep(interval_ms * 1000);
     }
+
+    // cleanup
+    free_process_list(&p_list);
+    return 0;
 }
